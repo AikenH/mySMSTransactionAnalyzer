@@ -1,0 +1,11 @@
+initial_year: 2023
+keywords:
+  - 银行
+  - 借记卡
+  - 收入
+  - 交易
+  - 支付
+  - 支取
+  - 余额
+message_dir: 'messages'
+output_dir: 'messages'
