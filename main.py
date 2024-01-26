@@ -12,3 +12,6 @@ if __name__ == "__main__":
 
     verified_transactions = verify_transactions(transactions)
     generate_csv_files(verified_transactions, config['output_dir'])
+
+    monthly_totals = calculate_monthly_totals(transactions)
+    plot_monthly_totals(monthly_totals, config['output_dir'])
