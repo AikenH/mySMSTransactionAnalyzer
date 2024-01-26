@@ -1,6 +1,6 @@
 from config import read_config_file
 from data_extraction import read_and_sort_messages, extract_messages, extract_details
-from report_generation import generate_csv_files
+from report_generation import generate_csv_files, calculate_monthly_totals, plot_monthly_totals
 from data_verification import verify_transactions
 
 if __name__ == "__main__":

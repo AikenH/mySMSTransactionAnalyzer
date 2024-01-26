@@ -4,7 +4,7 @@ import math
 from datetime import datetime
 
 
-@log_execution(verbose=True)
+@log_execution(verbose=False)
 def verify_transactions(transactions):
     """
     Verifies the consistency of transaction records by checking the running balance against the reported balance for each account.
@@ -44,7 +44,8 @@ def verify_transactions(transactions):
             else:
                 running_balance += amount
                 if not math.isclose(running_balance, reported_balance, rel_tol=1e-5):
-                    print(f'Discrepancy found for account {account_number}: running balance is {running_balance} but the reported balance is {reported_balance}.')
+                    print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
+                          but the reported balance is {reported_balance}.')
                     transaction['note'] = 'number need check, message may miss'
                     running_balance = reported_balance
                 else:

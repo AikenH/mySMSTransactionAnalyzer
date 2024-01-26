@@ -53,7 +53,7 @@ def setup_logger():
     os.makedirs(log_dir, exist_ok=True)
 
     handler = RotatingFileHandler(
-        log_path, mode='a', maxBytes=5,
+        log_path, mode='a', maxBytes=5*1024*1024,
         backupCount=2, encoding='utf-8', delay=0
     )
     handler.setFormatter(logging.Formatter(

@@ -6,7 +6,7 @@ from collections import defaultdict
 logger = setup_logger()
 
 
-@log_execution(verbose=True)
+@log_execution(verbose=False)
 def generate_csv_files(transactions, output_dir):
     """
     Generates CSV files for transactions, grouped by account number.

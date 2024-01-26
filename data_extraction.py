@@ -8,7 +8,7 @@ from utils import log_execution, parse_date, setup_logger
 logger = setup_logger()
 
 
-@log_execution(verbose=True)
+@log_execution(verbose=False)
 def read_and_sort_messages(message_dir, initial_year):
     """
     Reads messages from .txt files in a specified directory, sorts them by date, and returns a list of messages.
@@ -45,7 +45,7 @@ def read_and_sort_messages(message_dir, initial_year):
     return sorted(all_messages, key=lambda msg: parse_date(re.search(r'\d+月\d+日', msg[0]).group(), msg[1]))
 
 
-@log_execution(verbose=True)
+@log_execution(verbose=False)
 def extract_messages(messages, keywords):
     """
     Extracts messages that contain any of the specified keywords.
@@ -73,34 +73,47 @@ def extract_details(messages):
         date = parse_date(re.search(r'\d+月\d+日', message).group(), year)
 
         # Extracting account number
-        account_number_match = re.search(r'借记卡账户(\d+)', message)
-        account_number = account_number_match.group(1) if account_number_match else 'Unknown'
+        account_number_match = re.search(r'(\d+账户|账户\d+)', message)
+        # Extracting the digits from the match
+        if account_number_match:
+            # Removing "账户" to get only the account number
+            account_number = re.search(r'\d+', account_number_match.group(0)).group(0)
+        else:
+            account_number = 'Unknown'
 
         # Extracting transaction type, amount and balance
-        if '收入' in message:
+        if '收入' in message or '转存' in message:
             transaction_type = 'income'
             amount_sign = '+'
-        elif '支出' in message or '支付支取' in message:
+        elif '支出' in message or '支付支取' in message or '转支' in message:
             transaction_type = 'outcome'
             amount_sign = '-'
         else:
             transaction_type = 'unknown'
             amount_sign = ''
 
-        amount = re.search(r'人民币(\d+\.\d{2})元', message).group(1)
+        # Extracting objects using regular expressions
+        object1_match = re.search(r'(.+?)于', message)
+        object2_match = re.search(r'向(.+?)完成', message)
+        object1 = object1_match.group(1) if object1_match else f"您尾号{account_number}账户"
+        object2 = object2_match.group(1) if object2_match else 'Unknown'
+
+        amount = re.search(r'人民币((?:-)?\d+\.\d{2})(?:元)?', message).group(1)
         balance = re.search(r'余额(\d+\.\d{2})', message).group(1)
         # Extracting bank name, ensuring it ends with '银行'
         bank_name_match = re.search(r'【(.*?银行)】|\[(.*?银行)\]', message)
         bank_name = bank_name_match.group(1) or bank_name_match.group(2) if bank_name_match else 'Unknown'
-        amount = f"{amount_sign}{amount}" if amount != 'Unknown' else amount
+        amount = f"{amount_sign}{amount}" if (amount != 'Unknown' and '-' not in amount) else amount
 
         details.append({
             'date': date.strftime('%Y-%m-%d'),
+            'object1': object1,
+            'object2': object2,
             'account_number': account_number,
             'type': transaction_type,
             'amount': amount,
             'balance': balance,
-            'bank_name': bank_name,            
+            'bank_name': bank_name,
         })
 
     return details
