@@ -32,6 +32,7 @@ def verify_transactions(transactions):
         # Initalize starting balance for the current account
         starting_balance = float(account_transactions[0]['balance'])
         running_balance = starting_balance
+        running_balance_only = starting_balance
         first_transaction = True
 
         for transaction in account_transactions:
@@ -41,13 +42,23 @@ def verify_transactions(transactions):
             if first_transaction:
                 first_transaction = False
                 transaction['note'] = ''
+                transaction['running_balance'] = str(running_balance_only)
             else:
                 running_balance += amount
+                running_balance_only += amount
                 if not math.isclose(running_balance, reported_balance, rel_tol=1e-5):
-                    print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
+                    if reported_balance == 0:
+                        transaction['balance'] = running_balance
+                        transaction['note'] = "the origin reported balance is 0, but the running balance is {:.2f}".format(running_balance)
+                    else:
+                        print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
                           but the reported balance is {reported_balance}.')
-                    transaction['note'] = 'number need check, message may miss'
-                    running_balance = reported_balance
+                        transaction['note'] = 'the running balance is {:.2f} here is a gap of {:.2f}'.format(running_balance, -running_balance+reported_balance)
+                        running_balance = reported_balance
+                    transaction['running_balance'] = str(running_balance_only)
                 else:
                     transaction['note'] = ''
+                    transaction['running_balance'] = str(running_balance_only)
+                
+                
     return transactions

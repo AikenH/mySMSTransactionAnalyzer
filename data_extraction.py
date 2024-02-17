@@ -22,22 +22,29 @@ def read_and_sort_messages(message_dir, initial_year):
         file for file in os.listdir(message_dir) if file.endswith('.txt')
     ]
     all_messages = []
-    current_year = initial_year
-    last_month = 0
+    
     for file_name in message_files:
+        current_year = initial_year
+        last_month = 0
+        std_year = 2000
         file_path = os.path.join(message_dir, file_name)
         try:
-
             with open(file_path, 'r', encoding='utf-8') as file:
                 messages = file.readlines()
                 for message in messages:
+                    # FIXME: 前面会读到一个标准年份，作为年份校准，如果和后面同时都++的时候再添加
+                    std_year_match = re.search(r'(\d{4})-', message)
+                    if std_year_match: 
+                        std_year = int(std_year_match.group(1))
                     month_match = re.search(r'(\d+)月', message)
                     if month_match:
                         month = int(month_match.group(1))
                         if month < last_month:
                             current_year += 1
+                            if current_year > std_year:
+                                current_year = std_year
                         last_month = month
-                    all_messages.append((message, current_year))
+                        all_messages.append((message, current_year))
         except FileNotFoundError:
             logger.error(f"File not found: {file_path}")
         except Exception as e:
@@ -73,7 +80,9 @@ def extract_details(messages):
         date = parse_date(re.search(r'\d+月\d+日', message).group(), year)
 
         # Extracting account number
-        account_number_match = re.search(r'(\d+账户|账户\d+)', message)
+        account_number_match = re.search(r'(\d+账户|账户\d+|\d+公司账户|\d+个人账户)', message)
+        if not account_number_match: 
+            account_number_match = re.search(r'尾号(\d+)', message)
         # Extracting the digits from the match
         if account_number_match:
             # Removing "账户" to get only the account number
@@ -81,27 +90,36 @@ def extract_details(messages):
         else:
             account_number = 'Unknown'
 
-        # Extracting transaction type, amount and balance
-        if '收入' in message or '转存' in message:
-            transaction_type = 'income'
-            amount_sign = '+'
-        elif '支出' in message or '支付支取' in message or '转支' in message:
-            transaction_type = 'outcome'
-            amount_sign = '-'
-        else:
-            transaction_type = 'unknown'
-            amount_sign = ''
-
         # Extracting objects using regular expressions
         object1_match = re.search(r'(.+?)于', message)
         object2_match = re.search(r'向(.+?)完成', message)
         object1 = object1_match.group(1) if object1_match else f"您尾号{account_number}账户"
         object2 = object2_match.group(1) if object2_match else 'Unknown'
+        try:
+            amount = re.search(r'(?:收入|支出|人民币|金额为)((?:-)?\d+\.\d{2})(?:元|人民币)?', message).group(1)
+        except AttributeError:
+            try:
+                amount = re.search(r'金额为((?:-)?\d+\.\d{2})', message).group(1)
+            except AttributeError:
+                amount = re.search(r'(收入|支出)((?:-)?\d+\.\d{2})(人民币|元)', message).group(2)
+        
+        try:
+            balance = re.search(r'余额(\d+\.\d{2})', message).group(1)
+        except AttributeError:
+            balance = '0.00'
 
-        amount = re.search(r'人民币((?:-)?\d+\.\d{2})(?:元)?', message).group(1)
-        balance = re.search(r'余额(\d+\.\d{2})', message).group(1)
+        # Extracting transaction type, amount and balance
+        if '收入' in message or '转存' in message or '结息' in message:
+            transaction_type = 'income'
+            amount_sign = '+'
+        elif '支出' in message or '支付支取' in message or '转支' in message or '通知存款交易' in message or '-' in amount:
+            transaction_type = 'outcome'
+            amount_sign = '-'
+        else:
+            transaction_type = 'income'
+            amount_sign = ''
         # Extracting bank name, ensuring it ends with '银行'
-        bank_name_match = re.search(r'【(.*?银行)】|\[(.*?银行)\]', message)
+        bank_name_match = re.search(r'【(.*?)】|\[(.*?银行)\]', message)
         bank_name = bank_name_match.group(1) or bank_name_match.group(2) if bank_name_match else 'Unknown'
         amount = f"{amount_sign}{amount}" if (amount != 'Unknown' and '-' not in amount) else amount
 

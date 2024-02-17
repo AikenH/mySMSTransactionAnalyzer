@@ -1,6 +1,5 @@
-initial_year: 2023
+initial_year: 2016
 keywords:
-  - 银行
   - 借记卡
   - 收入
   - 交易
@@ -9,5 +8,7 @@ keywords:
   - 余额
   - 转存
   - 转支
+  - 存款
+  - 金额
 message_dir: 'messages'
 output_dir: 'messages'
