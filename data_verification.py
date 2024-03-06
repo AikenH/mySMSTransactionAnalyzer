@@ -35,30 +35,39 @@ def verify_transactions(transactions):
         running_balance_only = starting_balance
         first_transaction = True
 
-        for transaction in account_transactions:
+        # Create a init day to process the running balance compare.
+        prev_date = account_transactions[0]['date']
+
+        for i, transaction in enumerate(account_transactions):
+            if (i < len(account_transactions)-1):
+                now_date = account_transactions[i+1]['date']
+            else:
+                now_date = None
             amount = float(transaction['amount'])
             reported_balance = float(transaction['balance'])
 
             if first_transaction:
                 first_transaction = False
                 transaction['note'] = ''
-                transaction['running_balance'] = str(running_balance_only)
+                transaction['running_balance'] = "{:2f}".format(running_balance_only)
             else:
+                
                 running_balance += amount
                 running_balance_only += amount
-                if not math.isclose(running_balance, reported_balance, rel_tol=1e-5):
-                    if reported_balance == 0:
-                        transaction['balance'] = running_balance
-                        transaction['note'] = "the origin reported balance is 0, but the running balance is {:.2f}".format(running_balance)
+                if now_date != prev_date:
+                    if not math.isclose(running_balance, reported_balance, rel_tol=1e-5):
+                        if reported_balance == 0:
+                            transaction['balance'] = running_balance
+                            transaction['note'] = "没有余额信息,计算应为: {:.2f}".format(running_balance)
+                        else:
+                            print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
+                            but the reported balance is {reported_balance}.')
+                            transaction['note'] = '阶段性余额不一致,预计应为{:.2f} 该阶段内差额为 {:.2f}'.format(running_balance, -running_balance+reported_balance)
+                            running_balance = reported_balance
+                        transaction['running_balance'] = "{:2f}".format(running_balance_only)
                     else:
-                        print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
-                          but the reported balance is {reported_balance}.')
-                        transaction['note'] = 'the running balance is {:.2f} here is a gap of {:.2f}'.format(running_balance, -running_balance+reported_balance)
-                        running_balance = reported_balance
-                    transaction['running_balance'] = str(running_balance_only)
-                else:
-                    transaction['note'] = ''
-                    transaction['running_balance'] = str(running_balance_only)
-                
-                
+                        transaction['note'] = ''
+                        transaction['running_balance'] = "{:2f}".format(running_balance_only)
+            prev_date = now_date
     return transactions
+

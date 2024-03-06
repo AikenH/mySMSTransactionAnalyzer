@@ -32,9 +32,9 @@ def read_and_sort_messages(message_dir, initial_year):
             with open(file_path, 'r', encoding='utf-8') as file:
                 messages = file.readlines()
                 for message in messages:
-                    # FIXME: 前面会读到一个标准年份，作为年份校准，如果和后面同时都++的时候再添加
+                    # NOTE: 前面会读到一个标准年份，作为年份校准，如果和后面同时都++的时候再添加
                     std_year_match = re.search(r'(\d{4})-', message)
-                    if std_year_match: 
+                    if std_year_match:
                         std_year = int(std_year_match.group(1))
                     month_match = re.search(r'(\d+)月', message)
                     if month_match:
@@ -81,20 +81,20 @@ def extract_details(messages):
 
         # Extracting account number
         account_number_match = re.search(r'(\d+账户|账户\d+|\d+公司账户|\d+个人账户)', message)
-        if not account_number_match: 
+        if not account_number_match:
             account_number_match = re.search(r'尾号(\d+)', message)
         # Extracting the digits from the match
         if account_number_match:
             # Removing "账户" to get only the account number
             account_number = re.search(r'\d+', account_number_match.group(0)).group(0)
         else:
-            account_number = 'Unknown'
+            account_number = ' '
 
         # Extracting objects using regular expressions
         object1_match = re.search(r'(.+?)于', message)
         object2_match = re.search(r'向(.+?)完成', message)
         object1 = object1_match.group(1) if object1_match else f"您尾号{account_number}账户"
-        object2 = object2_match.group(1) if object2_match else 'Unknown'
+        object2 = object2_match.group(1) if object2_match else ' '
         try:
             amount = re.search(r'(?:收入|支出|人民币|金额为)((?:-)?\d+\.\d{2})(?:元|人民币)?', message).group(1)
         except AttributeError:
@@ -102,7 +102,7 @@ def extract_details(messages):
                 amount = re.search(r'金额为((?:-)?\d+\.\d{2})', message).group(1)
             except AttributeError:
                 amount = re.search(r'(收入|支出)((?:-)?\d+\.\d{2})(人民币|元)', message).group(2)
-        
+
         try:
             balance = re.search(r'余额(\d+\.\d{2})', message).group(1)
         except AttributeError:

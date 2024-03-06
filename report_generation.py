@@ -26,11 +26,15 @@ def generate_csv_files(transactions, output_dir):
         transactions_by_account[account_number].append(transaction)
 
     for account_number, account_transactions in transactions_by_account.items():
-        file_path = os.path.join(output_dir, f'{account_number}.csv')
+        file_path = os.path.join(output_dir, f'账户{account_number}.csv')
         try:
             with open(file_path, 'w', newline='', encoding='utf-8-sig') as file:
-                writer = csv.DictWriter(file, fieldnames=account_transactions[0].keys())
+                zh_filenames = ['日期', '转出方', "接收方", "我方账号", "收入/支出", "金额", "余额", "银行名称", "局部预期余额计算", "全局预期余额计算"]
+
+                writer = csv.DictWriter(file, fieldnames=zh_filenames)
                 writer.writeheader()
+                writer = csv.DictWriter(file, fieldnames=account_transactions[0].keys())
+
                 writer.writerows(account_transactions)
         except IOError as e:
             logger.error(f"IO error occurred while writing to {file_path}: {e}")
@@ -112,4 +116,4 @@ def plot_monthly_totals(monthly_totals, output_dir):
         file_path = os.path.join(output_dir, file_name)
         plt.savefig(file_path, dpi=300)
         plt.close()
-        
+
