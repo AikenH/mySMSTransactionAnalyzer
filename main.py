@@ -10,7 +10,7 @@ if __name__ == "__main__":
     bank_messages = extract_messages(sorted_messages, config['keywords'])
     transactions = extract_details(bank_messages)
 
-    verified_transactions = verify_transactions(transactions)
+    verified_transactions = verify_transactions(transactions, threshold=config['threshold'])
     generate_csv_files(verified_transactions, config['output_dir'])
 
     # monthly_totals = calculate_monthly_totals(transactions)

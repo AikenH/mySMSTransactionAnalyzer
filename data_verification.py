@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 @log_execution(verbose=False)
-def verify_transactions(transactions):
+def verify_transactions(transactions, threshold):
     """
     Verifies the consistency of transaction records by checking the running balance against the reported balance for each account.
 
@@ -18,6 +18,7 @@ def verify_transactions(transactions):
     if not transactions:
         return "No transactions to verify."
 
+    threshold = int(threshold)
     # Group transactions by account number
     transactions_by_account = defaultdict(list)
     for transaction in transactions:
@@ -55,14 +56,15 @@ def verify_transactions(transactions):
                 running_balance += amount
                 running_balance_only += amount
                 if now_date != prev_date:
-                    if not math.isclose(running_balance, reported_balance, rel_tol=1e-5):
+                    if not math.isclose(running_balance, reported_balance, abs_tol=0):
                         if reported_balance == 0:
                             transaction['balance'] = running_balance
                             transaction['note'] = "没有余额信息,计算应为: {:.2f}".format(running_balance)
                         else:
                             print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
                             but the reported balance is {reported_balance}.')
-                            transaction['note'] = '阶段性余额不一致,预计应为{:.2f} 该阶段内差额为 {:.2f}'.format(running_balance, -running_balance+reported_balance)
+                            if abs(running_balance - reported_balance) > threshold:
+                                transaction['note'] = '阶段性余额不一致,预计应为{:.2f} 该阶段内差额为 {:.2f}'.format(running_balance, -running_balance+reported_balance)
                             running_balance = reported_balance
                         transaction['running_balance'] = "{:2f}".format(running_balance_only)
                     else:
