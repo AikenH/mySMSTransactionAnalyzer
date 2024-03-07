@@ -12,3 +12,4 @@ keywords:
   - 金额
 message_dir: 'messages'
 output_dir: 'messages'
+threshold: 10
