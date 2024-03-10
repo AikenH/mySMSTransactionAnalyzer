@@ -1,4 +1,4 @@
-from utils import log_execution
+from utils.util import log_execution
 from collections import defaultdict
 import math
 from datetime import datetime
@@ -60,16 +60,19 @@ def verify_transactions(transactions, threshold):
                         if reported_balance == 0:
                             transaction['balance'] = running_balance
                             transaction['note'] = "没有余额信息,计算应为: {:.2f}".format(running_balance)
+                            transaction['gap'] = ""
                         else:
                             print(f'Discrepancy found for account {account_number}: running balance is {running_balance} \
                             but the reported balance is {reported_balance}.')
                             if abs(running_balance - reported_balance) > threshold:
                                 transaction['note'] = '阶段性余额不一致,预计应为{:.2f} 该阶段内差额为 {:.2f}'.format(running_balance, -running_balance+reported_balance)
+                                transaction['gap'] = '{:.2f}'.format(-running_balance+reported_balance)
                             running_balance = reported_balance
-                        transaction['running_balance'] = "{:2f}".format(running_balance_only)
+                        transaction['running_balance'] = "{:.2f}".format(running_balance_only)
                     else:
                         transaction['note'] = ''
-                        transaction['running_balance'] = "{:2f}".format(running_balance_only)
+                        transaction['gap'] = ""
+                        transaction['running_balance'] = "{:.2f}".format(running_balance_only)
             prev_date = now_date
     return transactions
 

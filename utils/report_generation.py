@@ -1,6 +1,6 @@
 import csv
 import os
-from utils import log_execution, setup_logger
+from utils.util import log_execution, setup_logger
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -29,7 +29,8 @@ def generate_csv_files(transactions, output_dir):
         file_path = os.path.join(output_dir, f'账户{account_number}.csv')
         try:
             with open(file_path, 'w', newline='', encoding='utf-8-sig') as file:
-                zh_filenames = ['日期', '转出方', "接收方", "我方账号", "收入/支出", "金额", "余额", "银行名称", "局部预期余额计算", "全局预期余额计算"]
+                # NOTE: Name here based on the extract_details functions datails structure, if we want add a type, please add  the default value in the extract_details function.
+                zh_filenames = ['日期', '转出方', "接收方", "我方账号", "收入/支出", "金额", "余额", "银行名称", "局部预期余额计算", "差额(同前向)", "全局预期余额计算"]
 
                 writer = csv.DictWriter(file, fieldnames=zh_filenames)
                 writer.writeheader()
