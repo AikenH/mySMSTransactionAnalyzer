@@ -1,6 +1,6 @@
 import csv
 import os
-from utils import log_execution, setup_logger
+from utils.util import log_execution, setup_logger
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from datetime import datetime

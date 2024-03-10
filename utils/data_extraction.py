@@ -2,7 +2,7 @@
 
 import os
 import re
-from utils import log_execution, parse_date, setup_logger
+from utils.util import log_execution, parse_date, setup_logger
 
 
 logger = setup_logger()
