@@ -132,6 +132,9 @@ def extract_details(messages):
             'amount': amount,
             'balance': balance,
             'bank_name': bank_name,
+            'note': '',
+            'gap': '',
+            'running_balance': "",
         })
 
     return details
