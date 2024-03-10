@@ -46,3 +46,4 @@ Contributions to the Financial Transaction Analyzer are welcome. Please feel fre
 ## FI
 
 this readme file generate by chatgpt. thx a lot.
+目前该工具暂时告一段落，后续如果有银行信息的正则不被支持，有识别出错的信息，可以在issue中贴出对应的example，有时间会修改正则对新的银行信息进行支持。
