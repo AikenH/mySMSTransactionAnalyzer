@@ -232,6 +232,9 @@ pyrightconfig.json
 
 logs/*
 messages/*
+reports/*
 
 !logs/.gitkeep
 !messages/.gitkeep
+!reports/.gitkeep
+

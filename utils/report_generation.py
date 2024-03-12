@@ -1,13 +1,22 @@
 import csv
 import os
-from utils.util import log_execution, setup_logger
+from utils.util import log_execution, setup_logger, is_number
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
 import seaborn as sns
+import openpyxl
 
 logger = setup_logger()
+thin_border = openpyxl.styles.borders.Border(left=openpyxl.styles.borders.Side(border_style='thin'),
+                                             right=openpyxl.styles.borders.Side(border_style='thin'),
+                                             top=openpyxl.styles.borders.Side(border_style='thin'),
+                                             bottom=openpyxl.styles.borders.Side(border_style='thin'))
+Font = openpyxl.styles.Font(u'微软雅黑', size=12, bold=False, italic=False, strike=False, color='000000')
+ErrorFont = openpyxl.styles.Font(u'微软雅黑', size=11, bold=True, italic=False, strike=False, color='FF0000')
+RightFont = openpyxl.styles.Font(u'微软雅黑', size=11, bold=True, italic=False, strike=False, color='008000')
+Align = openpyxl.styles.Alignment(horizontal='center', vertical='center', wrap_text=True)
 
 
 @log_execution(verbose=False)
@@ -17,30 +26,84 @@ def generate_csv_files(transactions, output_dir):
     Each account's transactions are written to a separate CSV file.
 
     Args:
-        transactions (list): The list of transaction details.
+        transactions (list): The list of transaction details.p
         output_dir (str): The directory where the CSV files will be saved.
     """
     transactions_by_account = defaultdict(list)
+    
     for transaction in transactions:
         account_number = transaction['account_number']
         transactions_by_account[account_number].append(transaction)
 
     for account_number, account_transactions in transactions_by_account.items():
-        file_path = os.path.join(output_dir, f'账户{account_number}.csv')
+        file_path = os.path.join(output_dir, f'账户{account_number}.xlsx')
         try:
-            with open(file_path, 'w', newline='', encoding='utf-8-sig') as file:
-                # NOTE: Name here based on the extract_details functions datails structure, if we want add a type, please add  the default value in the extract_details function.
-                zh_filenames = ['日期', '转出方', "接收方", "我方账号", "收入/支出", "金额", "余额", "银行名称", "局部预期余额计算", "差额(同前向)", "全局预期余额计算"]
+            wb = openpyxl.Workbook()
+            sheet = wb.active
+            headers = ['日期', '转出方', "接收方", "我方账号", "收入/支出", "金额", "余额", "银行名称", "局部预期余额计算", "差额(同前向)", "全局预期余额计算"]
+            header_lens = [14, 36, 18, 12, 13, 12, 12, 14, 34, 14, 18]
+            sheet.freeze_panes = 'A2'
+            sheet.append(headers)
 
-                writer = csv.DictWriter(file, fieldnames=zh_filenames)
-                writer.writeheader()
-                writer = csv.DictWriter(file, fieldnames=account_transactions[0].keys())
+            for i, header in enumerate(headers, start=1):
+                col_letter = openpyxl.utils.get_column_letter(i)
+                cell = sheet.cell(row=1, column=i)
+                cell.font = openpyxl.styles.Font(size=12, bold=True)
+                cell.border = thin_border
+                cell.alignment = Align
+                
+                cell.fill = openpyxl.styles.PatternFill(start_color='ffeb9c', end_color='ffeb9c', fill_type='solid')
+                header_length = max(header_lens[i-1], 8)  # Minimum width of 10 characters
+                sheet.column_dimensions[col_letter].width = header_length
 
-                writer.writerows(account_transactions)
+            for idx, transaction in enumerate(account_transactions, start=2):
+                row = list(transaction.values())
+                row = [float(item) if is_number(item) else item for item in row]
+                sheet.append(row)
+                style_transaction_cell(sheet, idx, row)
+
+            wb.save(file_path)
+
         except IOError as e:
             logger.error(f"IO error occurred while writing to {file_path}: {e}")
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
+
+
+def style_transaction_cell(sheet, row, row_value):
+    """
+    Style a cell in the transaction sheet based on the transaction details.
+    if the gap rol is not '', make font red when <0, green when >0
+    if the note rol is not '', make font red.
+    """
+    map_idx_to_col = {'date': 0, 'object1': 1, 'object2': 2, 'account_number': 3, 'type': 4,
+                      'amount': 5, 'balance': 6, 'bank_name': 7, 'note': 8, 'gap': 9, 'running_balance': 10}
+    cell = sheet.cell(row=row, column=1)
+
+    for col_idx, col_value in enumerate(row_value, start=0):
+        cell = sheet.cell(row=row, column=col_idx+1)
+        cell.border = thin_border
+        cell.alignment = Align
+        if col_idx == map_idx_to_col['gap']:
+            if col_value == '':
+                continue
+            elif col_value < 0:
+                # cell.fill = openpyxl.styles.PatternFill(start_color='ffcccc', end_color='ffcccc', fill_type='solid')
+                cell.font = ErrorFont
+
+            else:
+                # cell.fill = openpyxl.styles.PatternFill(start_color='ccffcc', end_color='ccffcc', fill_type='solid')
+                cell.font = RightFont
+        elif col_idx == map_idx_to_col['note']:
+            if col_value == '' or '没有余额' in col_value:
+                continue
+            else:
+                # cell.fill = openpyxl.styles.PatternFill(start_color='ffcccc', end_color='ffcccc', fill_type='solid')
+                cell.font = ErrorFont
+        else:
+            continue
+
+    return
 
 
 @log_execution(verbose=False)
@@ -63,6 +126,7 @@ def calculate_monthly_totals(transactions):
 
 # Setting Seaborn style
 sns.set(style="whitegrid")
+
 
 @log_execution(verbose=False)
 def plot_monthly_totals(monthly_totals, output_dir):
@@ -117,4 +181,3 @@ def plot_monthly_totals(monthly_totals, output_dir):
         file_path = os.path.join(output_dir, file_name)
         plt.savefig(file_path, dpi=300)
         plt.close()
-

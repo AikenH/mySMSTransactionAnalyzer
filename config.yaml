@@ -11,5 +11,5 @@ keywords:
   - 存款
   - 金额
 message_dir: 'messages'
-output_dir: 'messages'
+output_dir: 'reports'
 threshold: 10
