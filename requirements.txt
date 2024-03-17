@@ -1,1 +1,5 @@
-PyYAML @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_a8_sdgulmz/croot/pyyaml_1698096054705/work
+pyyaml==6.0.1
+matplotlib==3.8.0
+numpy==1.24.3
+seaborn==0.12.2
+openpyxl==3.0.10
